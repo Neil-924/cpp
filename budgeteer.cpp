@@ -78,12 +78,11 @@ double getPositiveDouble(const string& prompt) {
 }
 
 void recalculate() {
-    // One-time expenses come out of the budget first
     double oneTimeTotal = 0.0;
     for (const auto& [name, e] : oneTimeExpenses)
         oneTimeTotal += e.amount;
 
-    double remaining = weeklyBudget - oneTimeTotal; // base for daily %
+    double remaining = weeklyBudget - oneTimeTotal;
 
     size_t numDays = daysIncluded.size();
 
@@ -92,7 +91,6 @@ void recalculate() {
         e.dailyBudget = (numDays > 0) ? e.totalBudget / numDays : 0.0;
     }
 
-    // Update percentage equivalence for one-time expenses
     for (auto& [name, e] : oneTimeExpenses) {
         if (weeklyBudget > 0)
             e.percentageEquivalence = (e.amount / weeklyBudget) * 100.0;
@@ -142,7 +140,6 @@ void addDay() {
 
     daysIncluded.push_back(day);
 
-    // Keep days in weekly order (vector sorted by DAYS_ORDER index)
     sort(daysIncluded.begin(), daysIncluded.end(),
         [](const string& a, const string& b) {
             auto idxA = find(DAYS_ORDER.begin(), DAYS_ORDER.end(), a) - DAYS_ORDER.begin();
@@ -194,13 +191,11 @@ void addDailyExpense() {
     cout << "  ADD DAILY EXPENSE\n";
     printDivider();
 
-    // Calculate current percent used
     double usedPercent = 0.0;
     for (const auto& [n, e] : dailyExpenses)
         usedPercent += e.percentage;
     double availPercent = 100.0 - usedPercent;
 
-    // Also account for one-time expenses eating into the budget
     double oneTimeTotal = 0.0;
     for (const auto& [n, e] : oneTimeExpenses)
         oneTimeTotal += e.amount;
