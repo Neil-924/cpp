@@ -16,7 +16,6 @@ struct DailyExpense {
 struct OneTimeExpense {
     double amount;
     string day;
-    double percentageEquivalence;
 };
 
 const vector<string> DAYS_ORDER = {
@@ -27,7 +26,6 @@ double weeklyBudget = 0.0;
 
 vector<string> daysIncluded;
 
-// UNORDERED_MAP — maps expense name → struct
 unordered_map<string, DailyExpense>   dailyExpenses;
 unordered_map<string, OneTimeExpense> oneTimeExpenses;
 
@@ -91,10 +89,6 @@ void recalculate() {
         e.dailyBudget = (numDays > 0) ? e.totalBudget / numDays : 0.0;
     }
 
-    for (auto& [name, e] : oneTimeExpenses) {
-        if (weeklyBudget > 0)
-            e.percentageEquivalence = (e.amount / weeklyBudget) * 100.0;
-    }
 }
 
 void printDivider(char c = '=', int n = 52) {
@@ -124,7 +118,6 @@ void addDay() {
     cout << "  Enter day of the week: ";
     string day;
     cin >> day;
-    clearInput();
     day = capitalize(day);
 
     if (!isValidDay(day)) {
@@ -140,12 +133,14 @@ void addDay() {
 
     daysIncluded.push_back(day);
 
-    sort(daysIncluded.begin(), daysIncluded.end(),
-        [](const string& a, const string& b) {
-            auto idxA = find(DAYS_ORDER.begin(), DAYS_ORDER.end(), a) - DAYS_ORDER.begin();
-            auto idxB = find(DAYS_ORDER.begin(), DAYS_ORDER.end(), b) - DAYS_ORDER.begin();
-            return idxA < idxB;
-        });
+    for (size_t i = 0; i < daysIncluded.size() - 1; ++i) {
+        for (size_t j = 0; j < daysIncluded.size() - 1 - i; ++j) {
+            auto idxA = find(DAYS_ORDER.begin(), DAYS_ORDER.end(), daysIncluded[j]) - DAYS_ORDER.begin();
+            auto idxB = find(DAYS_ORDER.begin(), DAYS_ORDER.end(), daysIncluded[j + 1]) - DAYS_ORDER.begin();
+            if (idxA > idxB)
+                swap(daysIncluded[j], daysIncluded[j + 1]);
+        }
+    }
 
     recalculate();
     cout << "  " << day << " added!\n";
@@ -170,7 +165,6 @@ void removeDay() {
         cout << "  Enter day to remove: ";
         string day;
         cin >> day;
-        clearInput();
         day = capitalize(day);
 
         auto it = find(daysIncluded.begin(), daysIncluded.end(), day);
@@ -259,7 +253,6 @@ void removeDailyExpense() {
 
         cout << "  Enter expense name to remove: ";
         string name;
-        clearInput();
         getline(cin, name);
 
         if (!dailyExpenses.count(name)) {
@@ -282,10 +275,6 @@ void addOneTimeExpense() {
     double oneTimeTotal = 0.0;
     for (const auto& [n, e] : oneTimeExpenses)
         oneTimeTotal += e.amount;
-
-    double dailyPercUsed = 0.0;
-    for (const auto& [n, e] : dailyExpenses)
-        dailyPercUsed += e.percentage;
 
     double availableForOneTime = weeklyBudget - oneTimeTotal;
     cout << fixed << setprecision(2);
@@ -314,7 +303,6 @@ void addOneTimeExpense() {
     cout << "  Day to pay   : ";
     string day;
     cin >> day;
-    clearInput();
     day = capitalize(day);
 
     if (!isValidDay(day)) {
@@ -322,8 +310,7 @@ void addOneTimeExpense() {
         return;
     }
 
-    double pctEquiv = (weeklyBudget > 0) ? (amount / weeklyBudget) * 100.0 : 0.0;
-    oneTimeExpenses[name] = { amount, day, pctEquiv };
+    oneTimeExpenses[name] = { amount, day };
     recalculate();
     cout << "  \"" << name << "\" added! Due on " << day << ".\n";
 }
@@ -353,7 +340,6 @@ void removeOneTimeExpense() {
 
         cout << "  Enter expense name to remove: ";
         string name;
-        clearInput();
         getline(cin, name);
 
         if (!oneTimeExpenses.count(name)) {
@@ -382,9 +368,9 @@ void showSummary() {
     double unallocated = remaining * ((100.0 - dailyPercentUsed) / 100.0);
 
     cout << "\n";
-    printDivider('=', 52);
+    printDivider();
     cout << "  BUDGET SUMMARY\n";
-    printDivider('=', 52);
+    printDivider();
     cout << fixed << setprecision(2);
     cout << "  Weekly Budget  : PHP " << weeklyBudget << "\n";
     cout << "  One-time Total : PHP " << oneTimeTotal << "\n";
@@ -431,7 +417,7 @@ void showSummary() {
         }
     }
 
-    printDivider('=', 52);
+    printDivider();
 }
 
 void resetBudget() {
@@ -439,7 +425,6 @@ void resetBudget() {
     cout << "  Confirm? (y/n): ";
     char c;
     cin >> c;
-    clearInput();
     if (tolower(c) != 'y') {
         cout << "  Cancelled.\n";
         return;
